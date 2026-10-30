@@ -1,17 +1,173 @@
 ---
+import '../styles/arcade.css';
 
+const title = 'MONA MAYHEM';
+const bootLines = [
+	'MONA-OS BIOS v2.6  (C) OCTOCORP',
+	'CHECKING CONTRIBUTION RAM ...... OK',
+	'LOADING PIXEL SHADERS .......... OK',
+	'CALIBRATING NEON TUBES ......... OK',
+	'2 PLAYERS DETECTED',
+];
 ---
 
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Mona Mayhem</title>
+		<meta name="theme-color" content="#0a0a1a" />
+		<meta name="description" content="GitHub Contribution Battle Arena. Pick two players, compare a year of contributions." />
+		<title>Mona Mayhem - GitHub Contribution Battle Arena</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+		<script is:inline>
+			// Set theme and intro state before first paint to avoid flashes.
+			try {
+				const root = document.documentElement;
+				if (localStorage.getItem('mm:theme') === 'alt') root.dataset.theme = 'alt';
+				if (sessionStorage.getItem('mm:intro') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+					root.classList.add('skip-intro');
+				}
+			} catch {}
+		</script>
+		<noscript><style>.intro { display: none !important; } .hero, .slot, .battle-btn, .hud { opacity: 1 !important; transform: none !important; }</style></noscript>
 	</head>
 	<body>
-		<h1>Mona Mayhem</h1>
-		<p>Welcome to Mona Mayhem! Time to build a GitHub Contribution Battle Arena.</p>
+		<div class="bg" aria-hidden="true">
+			<div class="bg__stars"></div>
+			<div class="bg__stars bg__stars--far"></div>
+			<div class="bg__horizon"></div>
+			<div class="bg__floor"><div class="bg__grid"></div></div>
+		</div>
+		<div class="crt" aria-hidden="true"><div class="crt__roll"></div></div>
+
+		<!-- Intro / attract screen -->
+		<div class="intro" id="intro" role="dialog" aria-modal="true" aria-label="Mona Mayhem intro">
+			<div class="intro__boot" aria-hidden="true">
+				{bootLines.map((line, i) => <p style={`--i:${i}`}>{line}</p>)}
+			</div>
+			<div class="intro__stage">
+				<p class="intro__logo" aria-hidden="true">
+					{[...'MONA'].map((ch, i) => <span class="p1" style={`--i:${i}`}>{ch}</span>)}
+					<br />
+					{[...'MAYHEM'].map((ch, i) => <span class="p2" style={`--i:${i + 4}`}>{ch}</span>)}
+				</p>
+				<p class="intro__sub">GITHUB CONTRIBUTION BATTLE ARENA</p>
+				<button class="intro__start" id="intro-start" type="button">PRESS START</button>
+				<p class="intro__hint">CLICK OR PRESS ANY KEY</p>
+			</div>
+			<div class="intro__flash" aria-hidden="true"></div>
+		</div>
+
+		<div class="app" id="app">
+			<header class="hud">
+				<div class="hud__cell">
+					<span class="hud__label p1">1UP</span>
+					<span class="hud__value" id="hud-battles">00</span>
+				</div>
+				<div class="hud__cell hud__cell--center">
+					<span class="hud__label">HI-SCORE</span>
+					<span class="hud__value" id="hud-hiscore">------</span>
+				</div>
+				<div class="hud__controls">
+					<button class="chip" id="theme-toggle" type="button" aria-pressed="false">
+						<span class="chip__swatch" aria-hidden="true"></span>ALT COLORS
+					</button>
+					<button class="chip" id="mute-toggle" type="button" aria-pressed="false">SOUND: ON</button>
+				</div>
+			</header>
+
+			<main id="main">
+				<section class="hero">
+					<h1 class="title" aria-label={title}>
+						<span class="title__line p1" data-text="MONA" aria-hidden="true">MONA</span>
+						<span class="title__line p2" data-text="MAYHEM" aria-hidden="true">MAYHEM</span>
+					</h1>
+					<p class="tagline">GITHUB CONTRIBUTION BATTLE ARENA</p>
+				</section>
+
+				<form class="arena" id="battle-form" novalidate>
+					<div class="arena__players">
+						<div class="slot slot--p1" style="--float:0">
+							<label class="slot__label" for="p1">PLAYER 1</label>
+							<div class="slot__field">
+								<span class="slot__prompt" aria-hidden="true">&gt;</span>
+								<input
+									id="p1"
+									name="p1"
+									type="text"
+									autocomplete="off"
+									autocapitalize="off"
+									spellcheck="false"
+									maxlength="39"
+									placeholder="octocat"
+									aria-describedby="p1-status battle-error"
+								/>
+							</div>
+							<span class="slot__status" id="p1-status" aria-live="polite">INSERT NAME</span>
+						</div>
+
+						<div class="vs" aria-hidden="true"><span>VS</span></div>
+
+						<div class="slot slot--p2" style="--float:1">
+							<label class="slot__label" for="p2">PLAYER 2</label>
+							<div class="slot__field">
+								<span class="slot__prompt" aria-hidden="true">&gt;</span>
+								<input
+									id="p2"
+									name="p2"
+									type="text"
+									autocomplete="off"
+									autocapitalize="off"
+									spellcheck="false"
+									maxlength="39"
+									placeholder="torvalds"
+									aria-describedby="p2-status battle-error"
+								/>
+							</div>
+							<span class="slot__status" id="p2-status" aria-live="polite">INSERT NAME</span>
+						</div>
+					</div>
+
+					<button class="battle-btn" id="battle-btn" type="submit" style="--float:2">
+						<span class="battle-btn__label">BATTLE!</span>
+					</button>
+
+					<p class="error" id="battle-error" role="alert" hidden></p>
+				</form>
+
+				<p class="loading" id="loading" role="status" hidden>
+					LOADING<span class="loading__dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>
+				</p>
+
+				<section class="results" id="results" aria-label="Battle results" hidden></section>
+
+				<section class="history" id="history" aria-labelledby="history-title" hidden>
+					<div class="history__head">
+						<h2 class="section-title" id="history-title">RECENT BATTLES</h2>
+						<button class="chip chip--danger" id="history-clear" type="button">CLEAR HISTORY</button>
+					</div>
+					<ol class="history__list" id="history-list"></ol>
+				</section>
+			</main>
+
+			<footer class="footer">
+				<p>&copy; 2026 MONA MAYHEM &middot; DATA FROM GITHUB &middot; INSERT COIN TO CONTINUE</p>
+			</footer>
+		</div>
+
+		<div class="countdown" id="countdown" hidden aria-hidden="true">
+			<p class="countdown__text" id="countdown-text"></p>
+		</div>
+		<div class="tip" id="tip" role="tooltip" hidden></div>
+		<canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+
+		<script>
+			import '../scripts/main';
+		</script>
 	</body>
 </html>
